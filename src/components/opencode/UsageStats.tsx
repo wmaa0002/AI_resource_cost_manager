@@ -226,7 +226,7 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
 
       {/* Token 价格参考 */}
       <div className="bg-gray-50 rounded-xl p-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">💰 Token 价格参考 (每百万 Token)</h4>
+        <h4 className="text-sm font-medium text-gray-900 mb-3">💰 Token 价格参考 (每百万 Token)</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div className="flex items-center gap-2">
             <span>🟢</span>
