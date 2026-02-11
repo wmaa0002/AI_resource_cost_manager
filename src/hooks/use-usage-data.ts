@@ -10,6 +10,7 @@ import { getProvider } from '@/lib/provider/registry';
 import { createCostCalculator } from '@/lib/cost-calculator';
 import { getFromStorage, saveToStorage, debounce } from '@/lib/utils';
 import { STORAGE_KEYS } from '@/types';
+import { useProviderConfig } from './use-provider-config';
 
 /**
  * 缓存配置
@@ -115,7 +116,7 @@ export function useUsageData(): UseUsageDataReturn {
       const localData = getFromStorage<NormalizedUsage[]>(STORAGE_KEYS.USAGE, []);
       if (localData.length > 0) {
         setData(localData);
-        setLastUpdated(getFromStorage<string>('last-sync', null));
+        setLastUpdated(getFromStorage<string>('last-sync', ''));
       }
     } finally {
       setLoading(false);

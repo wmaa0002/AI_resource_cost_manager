@@ -18,7 +18,7 @@ interface CostSummaryCardsProps {
 interface SummaryCardData {
   title: string;
   amount: number;
-  currency: string;
+  currency: 'CNY' | 'USD' | 'EUR' | '';
   icon: string;
   color: string;
   description: string;

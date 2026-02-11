@@ -57,10 +57,13 @@ export interface ModelInfo {
 
 // Provider API 配置
 export interface ProviderConfig {
+  id?: string;                      // 唯一标识符（可选）
   provider: string;              // Provider 名称
   apiKey: string;                // API Key
   baseUrl?: string;              // API 基础 URL（可选）
   isEnabled: boolean;            // 是否启用
+  createdAt?: string;            // 创建时间 (ISO date string, 可选)
+  updatedAt?: string;             // 更新时间 (ISO date string, 可选)
 }
 
 // 成本汇总接口

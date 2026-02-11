@@ -45,8 +45,9 @@ interface UseProviderConfigReturn extends ProviderConfigState {
     apiKey: string,
     baseUrl?: string
   ) => Promise<ProviderValidationResult>;
-  availableProviders: Array<{ name: string; displayName: string }>;
+  availableProviders: string[];
   isConfigValid: (provider: string) => boolean;
+  toggleEnabled: (provider: string) => void;
 }
 
 /**
@@ -213,6 +214,25 @@ export function useProviderConfig(): UseProviderConfigReturn {
     [getConfig]
   );
 
+  // 切换配置的启用状态
+  const toggleEnabled = useCallback((provider: string) => {
+    setConfigs((prev) => {
+      const updated = prev.map((c) => {
+        if (c.provider === provider) {
+          const newEnabled = !c.isEnabled;
+          return {
+            ...c,
+            isEnabled: newEnabled,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return c;
+      });
+      saveToStorage(STORAGE_KEYS.CONFIG, updated);
+      return updated;
+    });
+  }, []);
+
   return {
     configs,
     activeProvider,
@@ -225,6 +245,7 @@ export function useProviderConfig(): UseProviderConfigReturn {
     testConnection,
     availableProviders,
     isConfigValid,
+    toggleEnabled,
   };
 }
 

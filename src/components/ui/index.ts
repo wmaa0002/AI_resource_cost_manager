@@ -6,4 +6,4 @@ export { Card, CardHeader, CardTitle, CardContent } from './Card';
 export { Button } from './Button';
 export { Input, Textarea, Select } from './Input';
 export { Checkbox, Switch } from './Checkbox';
-export { Badge } from './Badge';
+export { Loading, LoadingOverlay, LoadingSpinner, PageLoader } from './Loading';

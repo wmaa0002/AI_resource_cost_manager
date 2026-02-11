@@ -18,7 +18,7 @@ export function Checkbox({ label, className = '', id, ...props }: CheckboxProps)
         {...props}
       />
       {label && (
-        <span className="text-sm text-gray-700" htmlFor={checkboxId}>
+        <span className="text-sm text-gray-700">
           {label}
         </span>
       )}
