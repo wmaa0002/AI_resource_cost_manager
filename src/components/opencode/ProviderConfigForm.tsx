@@ -13,16 +13,26 @@ interface ProviderConfigFormProps {
   onSave?: () => void;
 }
 
-/**
- * Provider 列表
- */
+// Provider 列表
 const PROVIDERS = [
-  { id: 'opencode', name: 'OpenCode', baseUrl: 'https://api.opencode.ai/v1' },
-  { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1' },
-  { id: 'anthropic', name: 'Anthropic', baseUrl: 'https://api.anthropic.com/v1' },
-  { id: 'google', name: 'Google Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1' },
-  { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
-  { id: 'azure', name: 'Azure OpenAI', baseUrl: '' },
+  // 国际厂商
+  { id: 'opencode', name: 'OpenCode', baseUrl: 'https://api.opencode.ai/v1', category: '国际' },
+  { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', category: '国际' },
+  { id: 'anthropic', name: 'Anthropic', baseUrl: 'https://api.anthropic.com/v1', category: '国际' },
+  { id: 'google', name: 'Google Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1', category: '国际' },
+  { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', category: '国际' },
+  { id: 'azure', name: 'Azure OpenAI', baseUrl: '', category: '国际' },
+  // 中国厂商
+  { id: 'qwen', name: '通义千问 (Qwen)', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', category: '国产' },
+  { id: 'volcengine', name: '火山引擎 (Volcengine)', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', category: '国产' },
+  { id: 'minimax', name: 'Minimax', baseUrl: 'https://api.minimax.chat/v1', category: '国产' },
+  { id: 'zhipu', name: '智谱 AI (GLM)', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', category: '国产' },
+  { id: 'moonshot', name: '月之暗面 (Kimi)', baseUrl: 'https://api.moonshot.cn/v1', category: '国产' },
+  { id: 'hunyuan', name: '腾讯混元 (Hunyuan)', baseUrl: 'https://hunyuan.cn-shanghai.cloud.tencent.com/api/v3', category: '国产' },
+  { id: 'yi', name: '零一万物 (Yi)', baseUrl: 'https://api.lingyiwanwu.com/v1', category: '国产' },
+  { id: 'tongyi', name: '阿里百炼', baseUrl: 'https://bailian.console.aliyun.com/openapi/api/v1', category: '国产' },
+  { id: 'baichuan', name: '百川智能', baseUrl: 'https://api.baichuan.com/v1', category: '国产' },
+  { id: 'spark', name: '讯飞星火', baseUrl: 'https://spark-api.xf-yun.com/v1', category: '国产' },
 ];
 
 export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFormProps) {
@@ -30,6 +40,7 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
 
   // 表单状态
   const [provider, setProvider] = useState(config?.provider || '');
+  const [customProviderName, setCustomProviderName] = useState(config?.provider || '');
   const [apiKey, setApiKey] = useState(config?.apiKey || '');
   const [baseUrl, setBaseUrl] = useState(config?.baseUrl || '');
   const [isEnabled, setIsEnabled] = useState(config?.isEnabled ?? true);
@@ -37,8 +48,28 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // 判断是否是自定义 provider
+  const isCustomProvider = provider === 'custom';
+
+  // 获取实际使用的 provider ID
+  const getActualProviderId = () => {
+    if (isCustomProvider) {
+      return `custom_${customProviderName.toLowerCase().replace(/\s+/g, '_')}`;
+    }
+    return provider;
+  };
+
   // 获取选中的 Provider 默认配置
   const selectedProvider = PROVIDERS.find((p) => p.id === provider);
+
+  // 按分类分组
+  const providersByCategory = PROVIDERS.reduce((acc, p) => {
+    if (!acc[p.category]) {
+      acc[p.category] = [];
+    }
+    acc[p.category].push(p);
+    return acc;
+  }, {} as Record<string, typeof PROVIDERS>);
 
   // 验证表单
   const validate = (): boolean => {
@@ -46,6 +77,10 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
 
     if (!provider) {
       newErrors.provider = '请选择 Provider';
+    }
+
+    if (isCustomProvider && !customProviderName.trim()) {
+      newErrors.customProviderName = '请输入 Provider 名称';
     }
 
     if (!apiKey.trim()) {
@@ -64,7 +99,8 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
     setTestResult(null);
 
     try {
-      const result = await testConnection(provider, apiKey, baseUrl || undefined);
+      const actualProviderId = getActualProviderId();
+      const result = await testConnection(actualProviderId, apiKey, baseUrl || undefined);
       setTestResult({
         success: result.isValid,
         message: result.message,
@@ -85,8 +121,10 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
 
     if (!validate()) return;
 
+    const actualProviderId = getActualProviderId();
+
     const result = await saveConfig({
-      provider,
+      provider: actualProviderId,
       apiKey,
       baseUrl: baseUrl || selectedProvider?.baseUrl || '',
       isEnabled,
@@ -106,9 +144,11 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
   // 当选择 Provider 时自动填充 Base URL
   const handleProviderChange = (value: string) => {
     setProvider(value);
-    const p = PROVIDERS.find((prov) => prov.id === value);
-    if (p && !baseUrl) {
-      setBaseUrl(p.baseUrl);
+    if (value !== 'custom') {
+      const p = PROVIDERS.find((prov) => prov.id === value);
+      if (p && !baseUrl) {
+        setBaseUrl(p.baseUrl);
+      }
     }
   };
 
@@ -145,14 +185,40 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
               }`}
             >
               <option value="">请选择 Provider</option>
-              {PROVIDERS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
+              {Object.entries(providersByCategory).map(([category, providers]) => (
+                <optgroup key={category} label={category}>
+                  {providers.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
+              <option value="custom">🔧 自定义 Provider</option>
             </select>
             {errors.provider && <p className="mt-1 text-sm text-red-500">{errors.provider}</p>}
           </div>
+
+          {/* 自定义 Provider 名称 */}
+          {isCustomProvider && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Provider 名称 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={customProviderName}
+                onChange={(e) => setCustomProviderName(e.target.value)}
+                placeholder="输入自定义 Provider 名称"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder-gray-400 ${
+                  errors.customProviderName ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.customProviderName && (
+                <p className="mt-1 text-sm text-red-500">{errors.customProviderName}</p>
+              )}
+            </div>
+          )}
 
           {/* API Key */}
           <div>
@@ -173,6 +239,13 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
               {provider === 'openai' && 'OpenAI API Key 以 sk- 开头'}
               {provider === 'anthropic' && 'Anthropic API Key 以 sk-ant- 开头'}
               {provider === 'opencode' && 'OpenCode API Key'}
+              {provider === 'qwen' && '阿里云百炼 API Key'}
+              {provider === 'volcengine' && '火山引擎 API Key'}
+              {provider === 'minimax' && 'Minimax API Key'}
+              {provider === 'zhipu' && '智谱 AI API Key'}
+              {provider === 'moonshot' && 'Kimi API Key'}
+              {provider === 'hunyuan' && '腾讯云 API Key'}
+              {provider === 'custom' && '请输入对应平台的 API Key'}
             </p>
           </div>
 
@@ -185,9 +258,14 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
               type="text"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder={selectedProvider?.baseUrl || '例如：https://api.example.com/v1'}
+              placeholder={selectedProvider?.baseUrl || (isCustomProvider ? '例如：https://api.example.com/v1' : '可选')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder-gray-400"
             />
+            {isCustomProvider && (
+              <p className="mt-1 text-xs text-gray-400">
+                输入自定义 API 的基础 URL
+              </p>
+            )}
           </div>
 
           {/* 启用开关 */}
@@ -238,7 +316,7 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
             <button
               type="button"
               onClick={handleTestConnection}
-              disabled={testing || !provider || !apiKey}
+              disabled={testing || !provider || (isCustomProvider && !customProviderName) || !apiKey}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               {testing ? '测试中...' : '测试连接'}

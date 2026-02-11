@@ -15,12 +15,24 @@ type TabType = 'overview' | 'usage' | 'providers' | 'sources';
 
 // Provider 列表
 const PROVIDERS = [
+  // 国际厂商
   { id: 'opencode', name: 'OpenCode', baseUrl: 'https://api.opencode.ai/v1' },
   { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1' },
   { id: 'anthropic', name: 'Anthropic', baseUrl: 'https://api.anthropic.com/v1' },
   { id: 'google', name: 'Google Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1' },
   { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
   { id: 'azure', name: 'Azure OpenAI', baseUrl: '' },
+  // 中国厂商
+  { id: 'qwen', name: '通义千问 (Qwen)', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  { id: 'volcengine', name: '火山引擎 (Volcengine)', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3' },
+  { id: 'minimax', name: 'Minimax', baseUrl: 'https://api.minimax.chat/v1' },
+  { id: 'zhipu', name: '智谱 AI (GLM)', baseUrl: 'https://open.bigmodel.cn/api/paas/v4' },
+  { id: 'moonshot', name: '月之暗面 (Kimi)', baseUrl: 'https://api.moonshot.cn/v1' },
+  { id: 'hunyuan', name: '腾讯混元 (Hunyuan)', baseUrl: 'https://hunyuan.cn-shanghai.cloud.tencent.com/api/v3' },
+  { id: 'yi', name: '零一万物 (Yi)', baseUrl: 'https://api.lingyiwanwu.com/v1' },
+  { id: 'tongyi', name: '阿里百炼', baseUrl: 'https://bailian.console.aliyun.com/openapi/api/v1' },
+  { id: 'baichuan', name: '百川智能', baseUrl: 'https://api.baichuan.com/v1' },
+  { id: 'spark', name: '讯飞星火', baseUrl: 'https://spark-api.xf-yun.com/v1' },
 ];
 
 export default function HomePage() {
@@ -128,7 +140,17 @@ export default function HomePage() {
                              providerInfo?.id === 'anthropic' ? '🟡' :
                              providerInfo?.id === 'google' ? '🔴' :
                              providerInfo?.id === 'deepseek' ? '⚫' :
-                             providerInfo?.id === 'azure' ? '🔷' : '📊'}
+                             providerInfo?.id === 'azure' ? '🔷' :
+                             providerInfo?.id === 'qwen' ? '🟠' :
+                             providerInfo?.id === 'volcengine' ? '🟣' :
+                             providerInfo?.id === 'minimax' ? '🟤' :
+                             providerInfo?.id === 'zhipu' ? '🩵' :
+                             providerInfo?.id === 'moonshot' ? '🌙' :
+                             providerInfo?.id === 'hunyuan' ? '🦁' :
+                             providerInfo?.id === 'yi' ? '☯️' :
+                             providerInfo?.id === 'tongyi' ? '🏔️' :
+                             providerInfo?.id === 'baichuan' ? '🌊' :
+                             providerInfo?.id === 'spark' ? '✨' : '📊'}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
