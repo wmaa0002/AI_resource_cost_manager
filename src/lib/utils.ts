@@ -12,6 +12,11 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   CNY: '¥',
   USD: '$',
   EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  KRW: '₩',
+  AUD: 'A$',
+  CAD: 'C$',
 };
 
 /**
@@ -23,7 +28,7 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
  */
 export function formatCurrency(
   amount: number,
-  currency: 'CNY' | 'USD' | 'EUR' = 'CNY',
+  currency: 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'KRW' | 'AUD' | 'CAD' = 'CNY',
   locale: string = 'zh-CN'
 ): string {
   const symbol = CURRENCY_SYMBOLS[currency] || currency;

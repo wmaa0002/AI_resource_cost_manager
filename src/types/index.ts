@@ -10,7 +10,7 @@ export type BillingMode = 'daily' | 'monthly' | 'yearly' | 'one-time';
 export type CostSourceType = 'api' | 'subscription' | 'hardware' | 'one-time';
 
 // 货币类型
-export type Currency = 'CNY' | 'USD' | 'EUR';
+export type Currency = 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'KRW' | 'AUD' | 'CAD';
 
 // 成本源接口
 export interface CostSource {
