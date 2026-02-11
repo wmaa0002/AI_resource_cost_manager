@@ -156,17 +156,28 @@ export async function testProviderConnection(
   baseUrl?: string
 ): Promise<ProviderValidationResult> {
   try {
-    const response = await fetch(
-      `${baseUrl || getDefaultBaseUrl(provider)}/health`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(10000),
-      }
-    );
+    // 对于特殊端点的 Provider，使用提供的完整端点
+    const specialEndpoints = ['minimax', 'volcengine', 'hunyuan'];
+    const endpoint = specialEndpoints.includes(provider.toLowerCase())
+      ? baseUrl
+      : `${baseUrl || getDefaultBaseUrl(provider)}/health`;
+
+    if (!endpoint) {
+      return {
+        isValid: false,
+        message: '未配置 API 端点',
+        errorCode: 'MISSING_ENDPOINT',
+      };
+    }
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
 
     if (response.ok) {
       return {
@@ -188,6 +199,15 @@ export async function testProviderConnection(
         isValid: false,
         message: '请求过于频繁，请稍后再试',
         errorCode: 'RATE_LIMITED',
+      };
+    }
+
+    // 对于 minimax 等特殊端点，404 可能表示端点路径错误
+    if (response.status === 404) {
+      return {
+        isValid: false,
+        message: 'API 端点不存在，请检查 Base URL 配置',
+        errorCode: 'ENDPOINT_NOT_FOUND',
       };
     }
 
