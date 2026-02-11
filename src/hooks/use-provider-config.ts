@@ -48,6 +48,7 @@ interface UseProviderConfigReturn extends ProviderConfigState {
   availableProviders: string[];
   isConfigValid: (provider: string) => boolean;
   toggleEnabled: (provider: string) => void;
+  refreshConfigs: () => void;
 }
 
 /**
@@ -56,7 +57,7 @@ interface UseProviderConfigReturn extends ProviderConfigState {
 export function useProviderConfig(): UseProviderConfigReturn {
   const [configs, setConfigs] = useState<ProviderConfig[]>([]);
   const [activeProvider, setActiveProviderState] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // 初始化加载配置
@@ -75,6 +76,8 @@ export function useProviderConfig(): UseProviderConfigReturn {
     } catch (err) {
       setError('加载配置失败');
       console.error('Failed to load provider configs:', err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -233,6 +236,23 @@ export function useProviderConfig(): UseProviderConfigReturn {
     });
   }, []);
 
+  // 刷新配置列表
+  const refreshConfigs = useCallback(() => {
+    try {
+      const savedConfigs = getFromStorage<ProviderConfig[]>(
+        STORAGE_KEYS.CONFIG,
+        []
+      );
+      setConfigs(savedConfigs);
+
+      const active = savedConfigs.find((c) => c.isEnabled);
+      setActiveProviderState(active?.provider || null);
+    } catch (err) {
+      setError('刷新配置失败');
+      console.error('Failed to refresh provider configs:', err);
+    }
+  }, []);
+
   return {
     configs,
     activeProvider,
@@ -246,6 +266,7 @@ export function useProviderConfig(): UseProviderConfigReturn {
     availableProviders,
     isConfigValid,
     toggleEnabled,
+    refreshConfigs,
   };
 }
 

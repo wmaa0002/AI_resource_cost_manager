@@ -37,7 +37,7 @@ const PROVIDERS = [
 
 export default function HomePage() {
   const { recalculateSummary } = useCostStore();
-  const { configs, deleteConfig, toggleEnabled } = useProviderConfig();
+  const { configs, deleteConfig, toggleEnabled, refreshConfigs } = useProviderConfig();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showConfigForm, setShowConfigForm] = useState(false);
@@ -316,6 +316,7 @@ export default function HomePage() {
           onSave={() => {
             setShowConfigForm(false);
             setEditingConfig(undefined);
+            refreshConfigs();
             recalculateSummary();
           }}
         />
