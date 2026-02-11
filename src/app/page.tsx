@@ -25,7 +25,7 @@ const PROVIDERS = [
   // 中国厂商
   { id: 'qwen', name: '通义千问 (Qwen)', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
   { id: 'volcengine', name: '火山引擎 (Volcengine)', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3' },
-  { id: 'minimax', name: 'Minimax', baseUrl: 'https://api.minimax.chat/v1' },
+  { id: 'minimax', name: 'Minimax', baseUrl: 'https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains' },
   { id: 'zhipu', name: '智谱 AI (GLM)', baseUrl: 'https://open.bigmodel.cn/api/paas/v4' },
   { id: 'moonshot', name: '月之暗面 (Kimi)', baseUrl: 'https://api.moonshot.cn/v1' },
   { id: 'hunyuan', name: '腾讯混元 (Hunyuan)', baseUrl: 'https://hunyuan.cn-shanghai.cloud.tencent.com/api/v3' },

@@ -25,7 +25,7 @@ const PROVIDERS = [
   // 中国厂商
   { id: 'qwen', name: '通义千问 (Qwen)', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', category: '国产' },
   { id: 'volcengine', name: '火山引擎 (Volcengine)', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', category: '国产' },
-  { id: 'minimax', name: 'Minimax', baseUrl: 'https://api.minimax.chat/v1', category: '国产' },
+  { id: 'minimax', name: 'Minimax', baseUrl: 'https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains', category: '国产' },
   { id: 'zhipu', name: '智谱 AI (GLM)', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', category: '国产' },
   { id: 'moonshot', name: '月之暗面 (Kimi)', baseUrl: 'https://api.moonshot.cn/v1', category: '国产' },
   { id: 'hunyuan', name: '腾讯混元 (Hunyuan)', baseUrl: 'https://hunyuan.cn-shanghai.cloud.tencent.com/api/v3', category: '国产' },
@@ -241,7 +241,7 @@ export function ProviderConfigForm({ config, onClose, onSave }: ProviderConfigFo
               {provider === 'opencode' && 'OpenCode API Key'}
               {provider === 'qwen' && '阿里云百炼 API Key'}
               {provider === 'volcengine' && '火山引擎 API Key'}
-              {provider === 'minimax' && 'Minimax API Key'}
+              {provider === 'minimax' && 'Minimax API Key (使用 Bearer Token 认证)'}
               {provider === 'zhipu' && '智谱 AI API Key'}
               {provider === 'moonshot' && 'Kimi API Key'}
               {provider === 'hunyuan' && '腾讯云 API Key'}
