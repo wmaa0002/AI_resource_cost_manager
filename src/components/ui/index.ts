@@ -7,3 +7,4 @@ export { Button } from './Button';
 export { Input, Textarea, Select } from './Input';
 export { Checkbox, Switch } from './Checkbox';
 export { Loading, LoadingOverlay, LoadingSpinner, PageLoader } from './Loading';
+export { UsageLineChart, MultiProviderUsageChart } from './LineChart';

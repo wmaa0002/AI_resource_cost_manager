@@ -3,10 +3,14 @@
  * 显示各 Provider 的 Token 用量和成本
  */
 
-import { useState, useEffect } from 'react';
-import { useProviderConfig, useUsageData } from '@/hooks';
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useProviderConfig } from '@/hooks';
 import { formatNumber, formatCurrency, getFromStorage, saveToStorage } from '@/lib/utils';
-import { LoadingSpinner } from '@/components/ui';
+import { LoadingSpinner, UsageLineChart, MultiProviderUsageChart } from '@/components/ui';
+import { fetchAllProvidersUsage } from '@/lib/usage-api';
+import type { DailyUsage, UsageResponse } from '@/lib/usage-api/types';
 import type { Currency } from '@/types';
 
 interface UsageStatsProps {
@@ -27,18 +31,6 @@ const CURRENCIES: { code: Currency; name: string; symbol: string }[] = [
 
 // 存储键
 const CURRENCY_STORAGE_KEY = 'usage-stats:currency';
-
-/**
- * Provider 图标映射
- */
-const PROVIDER_ICONS: Record<string, string> = {
-  opencode: '🔵',
-  openai: '🟢',
-  anthropic: '🟡',
-  google: '🔴',
-  deepseek: '⚫',
-  azure: '🔷',
-};
 
 // Token 价格参考（以 USD 为基准）
 const TOKEN_PRICES = [
@@ -63,6 +55,28 @@ const EXCHANGE_RATES: Record<string, number> = {
 };
 
 /**
+ * Provider 图标映射
+ */
+const PROVIDER_ICONS: Record<string, string> = {
+  opencode: '🔵',
+  openai: '🟢',
+  anthropic: '🟡',
+  google: '🔴',
+  deepseek: '⚫',
+  azure: '🔷',
+  qwen: '🟠',
+  volcengine: '🟣',
+  minimax: '🟤',
+  zhipu: '🩵',
+  moonshot: '🌙',
+  hunyuan: '🦁',
+  yi: '☯️',
+  tongyi: '🏔️',
+  baichuan: '🌊',
+  spark: '✨',
+};
+
+/**
  * 用量统计卡片
  */
 function UsageCard({
@@ -79,7 +93,6 @@ function UsageCard({
   const icon = PROVIDER_ICONS[provider.toLowerCase()] || '📊';
   const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
-  // 计算当前货币的成本
   const exchangeRate = EXCHANGE_RATES[currency] || 1;
   const convertedCost = usage.cost * exchangeRate;
 
@@ -127,7 +140,6 @@ function UsageCard({
 
 export function UsageStats({ onRefresh }: UsageStatsProps) {
   const { configs } = useProviderConfig();
-  const { data: usageData, loading, fetchUsage, refresh } = useUsageData();
 
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -136,39 +148,70 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('CNY');
   const [showCurrencySelector, setShowCurrencySelector] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [providerUsage, setProviderUsage] = useState<Record<string, UsageResponse>>({});
+  const [error, setError] = useState<string | null>(null);
 
-  // 加载保存的货币设置
   useEffect(() => {
     const savedCurrency = getFromStorage<Currency>(CURRENCY_STORAGE_KEY, 'CNY');
     setSelectedCurrency(savedCurrency);
   }, []);
 
-  // 获取已启用的 Provider 配置
+  const fetchUsageData = useCallback(async () => {
+    const enabledConfigs = configs.filter((c) => c.isEnabled);
+
+    if (enabledConfigs.length === 0) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const results = await fetchAllProvidersUsage(
+        enabledConfigs,
+        dateRange.startDate,
+        dateRange.endDate
+      );
+      setProviderUsage(results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取用量数据失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [configs, dateRange]);
+
+  useEffect(() => {
+    fetchUsageData();
+  }, [fetchUsageData]);
+
   const enabledConfigs = configs.filter((c) => c.isEnabled);
 
-  // 按 Provider 分组统计用量
   const usageByProvider = enabledConfigs.reduce(
     (acc, config) => {
       const provider = config.provider.toLowerCase();
-      if (!acc[provider]) {
-        acc[provider] = {
-          inputTokens: 0,
-          outputTokens: 0,
-          cost: 0,
-        };
+      const response = providerUsage[config.provider];
+
+      if (response?.success && response.data.length > 0) {
+        const totals = response.data.reduce(
+          (sum, day) => ({
+            inputTokens: sum.inputTokens + day.inputTokens,
+            outputTokens: sum.outputTokens + day.outputTokens,
+            cost: sum.cost + day.cost,
+          }),
+          { inputTokens: 0, outputTokens: 0, cost: 0 }
+        );
+        acc[provider] = totals;
+      } else {
+        acc[provider] = { inputTokens: 0, outputTokens: 0, cost: 0 };
       }
-      // 模拟数据（实际应从 API 获取）
-      acc[provider] = {
-        inputTokens: Math.floor(Math.random() * 100000) + 10000,
-        outputTokens: Math.floor(Math.random() * 50000) + 5000,
-        cost: Math.random() * 50 + 10,
-      };
+
       return acc;
     },
     {} as Record<string, { inputTokens: number; outputTokens: number; cost: number }>
   );
 
-  // 总计
   const totalUsage = Object.values(usageByProvider).reduce(
     (acc, curr) => ({
       inputTokens: acc.inputTokens + curr.inputTokens,
@@ -178,37 +221,41 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
     { inputTokens: 0, outputTokens: 0, cost: 0 }
   );
 
-  // 刷新数据
   const handleRefresh = () => {
-    refresh();
+    fetchUsageData();
     onRefresh?.();
   };
 
-  // 保存货币设置
   const handleSaveCurrency = () => {
     saveToStorage(CURRENCY_STORAGE_KEY, selectedCurrency);
     setShowCurrencySelector(false);
   };
 
-  // 获取当前货币符号
   const getCurrencySymbol = (currency: Currency) => {
     const curr = CURRENCIES.find(c => c.code === currency);
     return curr?.symbol || currency;
   };
 
-  // 获取当前货币名称
   const getCurrencyName = (currency: Currency) => {
     const curr = CURRENCIES.find(c => c.code === currency);
     return curr?.name || currency;
   };
 
-  // 计算汇率后的价格
   const getConvertedPrice = (usdPrice: number, currency: Currency) => {
     const exchangeRate = EXCHANGE_RATES[currency] || 1;
     return usdPrice * exchangeRate;
   };
 
-  // 加载状态
+  const chartDataByProvider = Object.entries(providerUsage).reduce(
+    (acc, [provider, response]) => {
+      if (response.success && response.data.length > 0) {
+        acc[provider] = response.data;
+      }
+      return acc;
+    },
+    {} as Record<string, DailyUsage[]>
+  );
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -217,9 +264,23 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <div className="text-4xl mb-4">⚠️</div>
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={handleRefresh}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          重试
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* 头部 */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">API 用量统计</h3>
@@ -250,7 +311,6 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
         </div>
       </div>
 
-      {/* 货币选择弹窗 */}
       {showCurrencySelector && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
@@ -307,7 +367,6 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
         </div>
       )}
 
-      {/* 日期范围选择 */}
       <div className="flex items-center gap-4">
         <input
           type="date"
@@ -324,7 +383,6 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
         />
       </div>
 
-      {/* 总计 */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-6 text-white">
         <div className="grid grid-cols-3 gap-6">
           <div>
@@ -344,7 +402,14 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
         </div>
       </div>
 
-      {/* 各 Provider 用量卡片 */}
+      {Object.keys(chartDataByProvider).length > 0 && (
+        <MultiProviderUsageChart
+          providerData={chartDataByProvider}
+          title="各 Provider 成本趋势"
+          currency={selectedCurrency}
+        />
+      )}
+
       {Object.keys(usageByProvider).length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
           <div className="text-4xl mb-4">🔌</div>
@@ -373,7 +438,15 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
         </div>
       )}
 
-      {/* Token 价格参考 */}
+      {Object.entries(chartDataByProvider).map(([provider, data]) => (
+        <UsageLineChart
+          key={provider}
+          data={data}
+          title={`${provider.charAt(0).toUpperCase() + provider.slice(1)} 用量趋势`}
+          currency={selectedCurrency}
+        />
+      ))}
+
       <div className="bg-gray-50 rounded-xl p-4">
         <h4 className="text-sm font-medium text-gray-900 mb-3">
           💰 Token 价格参考 (每百万 Token, {getCurrencyName(selectedCurrency)})
