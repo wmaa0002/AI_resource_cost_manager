@@ -231,22 +231,22 @@ export function UsageStats({ onRefresh }: UsageStatsProps) {
           <div className="flex items-center gap-2">
             <span>🟢</span>
             <span className="text-gray-600">OpenAI GPT-4:</span>
-            <span className="font-medium">$30 / $60</span>
+            <span className="font-medium text-black">$30 / $60</span>
           </div>
           <div className="flex items-center gap-2">
             <span>🟡</span>
             <span className="text-gray-600">Claude 3:</span>
-            <span className="font-medium">$3 / $15</span>
+            <span className="font-medium text-black">$3 / $15</span>
           </div>
           <div className="flex items-center gap-2">
             <span>🔵</span>
             <span className="text-gray-600">OpenCode:</span>
-            <span className="font-medium">$0.5 / $1.5</span>
+            <span className="font-medium text-black">$0.5 / $1.5</span>
           </div>
           <div className="flex items-center gap-2">
             <span>🔴</span>
             <span className="text-gray-600">Gemini:</span>
-            <span className="font-medium">$0.125 / $0.5</span>
+            <span className="font-medium text-black">$0.125 / $0.5</span>
           </div>
         </div>
       </div>
